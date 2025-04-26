@@ -5,7 +5,7 @@ from torch.utils.cpp_extension import load_inline
 
 
 def compile_extension():
-    cuda_source = Path("grayscale_kernel.cu").read_text()
+    cuda_source = Path("rgb_to_grayscale/grayscale_kernel.cu").read_text()
     cpp_source = "torch::Tensor rgb_to_grayscale(torch::Tensor image);"
 
     # Load the CUDA kernel as a PyTorch extension
@@ -28,11 +28,12 @@ def main():
     """
     ext = compile_extension()
 
-    x = (
-        read_image("/home/thomas/projects/cuda_tutorial/rgb_to_grayscale/image.png")
-        .permute(1, 2, 0)
-        .cuda()
-    )
+    x = read_image("/home/thomas/projects/cuda_tutorial/rgb_to_grayscale/image.png")
+    if x.shape[0] == 4:
+        x = x[:3, :, :]
+    x = x.permute(1, 2, 0)
+    x = x.cuda()
+
     print("mean:", x.float().mean())
     print("Input image:", x.shape, x.dtype)
 
@@ -42,7 +43,7 @@ def main():
 
     print("Output image:", y.shape, y.dtype)
     print("mean", y.float().mean())
-    write_png(y.permute(2, 0, 1).cpu(), "output.png")
+    write_png(y.permute(2, 0, 1).cpu(), "./rgb_to_grayscale/output.png")
 
 
 if __name__ == "__main__":
